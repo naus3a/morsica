@@ -2,11 +2,8 @@ package morsica
 
 import "time"
 
-// SignalOnCallback is the callback called when a signal is started
-type SignalOnCallback func()
-
-// SignalOffCallback is the callback called when a signal is stopped
-type SignalOffCallback func()
+// SignalCallback is the callback called when a signal is started or stopped
+type SignalCallback func()
 
 // Interval stores information about an element (dit, dah, space) interval
 type Interval struct {
@@ -17,8 +14,8 @@ type Interval struct {
 // IntervalSequencePlayer is able to play a seuqnce of intervals
 type IntervalSequencePlayer struct {
 	Sequence    []Interval
-	OnSignalOn  SignalOnCallback
-	OnSignalOff SignalOffCallback
+	OnSignalOn  SignalCallback
+	OnSignalOff SignalCallback
 	timer       *time.Timer
 	curSeq      int
 	bRunning    bool

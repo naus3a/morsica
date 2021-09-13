@@ -11,8 +11,15 @@ morsica [optional params] [optional commands] [message to encode/decode]
 
 If no command is specified, `morsica` will try to guess what you want based on your input
 
-## Params
+## Misc Params
 * `-h`: prints a help screen
 * `-s`: silent mode, disables all messages and spits out your nakes output
+
+## Morse format Params
 * `-sW [num]`: sets the inter word number of spaces in Morse code. **Default is 7 spaces**.
 * `-sS [num]`: sets the inter symbol number of spaces within a single word in Morse code. **Default is 3 spaces**
+
+## Playback params
+* `-p`: enable playback of a Morse sequence (alone it will do very little)
+* `-cOn [cmd]`: command called when signal is on
+* `-cOff [cmd]`: command called when signal is off 

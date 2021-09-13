@@ -4,7 +4,9 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"os/exec"
 	"strconv"
+	"strings"
 
 	"github.com/naus3a/morsica"
 )
@@ -20,8 +22,11 @@ const (
 )
 
 var txtInput string
+var sCmdOn string = ""
+var sCmdOff string = ""
 var curMode ToolMode = ModeNone
 var bVerbose bool = true
+var bPlayback bool = false
 
 ///
 /// CLI
@@ -34,11 +39,16 @@ func printHelp() {
 	fmt.Println("Commands:")
 	fmt.Println("\t-e: encode plaintext to morse code")
 	fmt.Println("\t-d: decode morse code to plaintext")
-	fmt.Println("Params:")
+	fmt.Println("Misc Params:")
 	fmt.Println("\t-h: print this help screen")
 	fmt.Println("\t-s: silent mode; no verbose messages, just the output")
+	fmt.Println("Morse Format Params:")
 	fmt.Println("\t-sW [num]: sets the number of spaces between words in Morse code (DEFAULT: 7)")
 	fmt.Println("\t-sS [num]: sets the number of spaces between symbols within a single word in Morse code (DEFAULT: 3)")
+	fmt.Println("Playback Params:")
+	fmt.Println("\t-p: playback encoded message")
+	fmt.Println("\t-cOn [cmd]: command to call when signal starts")
+	fmt.Println("\t-cOff [cmd]: command to call when signal stops")
 }
 
 func printVerbose(msg string) {
@@ -74,6 +84,18 @@ func parseCliArgs(alphabet *morsica.Alphabet) {
 			val, err := getIntArgValue(&args, i)
 			if err == nil {
 				alphabet.SetInterSymbolSpaces(val)
+				i++
+			}
+		case "-p":
+			bPlayback = true
+		case "-cOn":
+			sCmdOn = getArgValue(&args, i)
+			if sCmdOn != "" {
+				i++
+			}
+		case "-cOff":
+			sCmdOff = getArgValue(&args, i)
+			if sCmdOff != "" {
 				i++
 			}
 		default:
@@ -117,6 +139,49 @@ func guessModeIfNeeded() {
 }
 
 ///
+/// playback
+///
+
+func playback(morse string) {
+	printVerbose("Starting Playback!")
+	timing := morsica.NewTiming()
+	player := morsica.NewIntervalSequencePlayer(timing.MorseMessageToIntervalSequence(morse))
+	var cmdOn *exec.Cmd = nil
+	var cmdOff *exec.Cmd = nil
+	var outOn []byte
+	var outOff []byte
+	setupCommand(&sCmdOn, cmdOn, &outOn, &player.OnSignalOn)
+	setupCommand(&sCmdOff, cmdOff, &outOff, &player.OnSignalOff)
+	player.Start()
+}
+
+func setupCommand(sCmd *string, cmd *exec.Cmd, output *[]byte, cbk *morsica.SignalCallback) {
+	if *sCmd == "" {
+		return
+	}
+	printVerbose("Registering command: " + *sCmd)
+	ss := strings.Split(*sCmd, " ")
+	var sMainCmd string
+	if len(ss) > 1 {
+		sMainCmd = ss[0]
+		var sCmdArgs []string = ss[1:len(ss)]
+		cmd = exec.Command(sMainCmd, sCmdArgs[0:]...)
+	} else {
+		sMainCmd = *sCmd
+		cmd = exec.Command(sMainCmd)
+	}
+	var err error
+	*output, err = cmd.Output()
+	if err != nil {
+		fmt.Println("Cannout create an output for " + *sCmd)
+	}
+	*cbk = func() {
+		cmd.Run()
+		fmt.Println(string(*output))
+	}
+}
+
+///
 /// endocding/decoding
 ///
 
@@ -124,6 +189,9 @@ func performEncoding(alphabet *morsica.Alphabet) {
 	printVerbose("Encoding message:")
 	output := alphabet.Encode(txtInput)
 	fmt.Println(output)
+	if bPlayback {
+		playback(output)
+	}
 }
 
 func performDecoding(alphabet *morsica.Alphabet) {
@@ -137,6 +205,12 @@ func performDecoding(alphabet *morsica.Alphabet) {
 ///
 
 func main() {
+	/*cmd := exec.Command("echo", "CIPPA")
+	stdout, err := cmd.Output()
+	if err != nil {
+		fmt.Println(err.Error())
+	}
+	fmt.Print(string(stdout))*/
 	alphabet := morsica.NewAlphabet()
 	parseCliArgs(alphabet)
 	guessModeIfNeeded()
