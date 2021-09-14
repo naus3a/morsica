@@ -188,7 +188,9 @@ func setupCommand(sCmd *string, cmd *exec.Cmd, output *[]byte, cbk *morsica.Sign
 	}
 	*cbk = func() {
 		cmd.Run()
-		fmt.Println(string(*output))
+		if *output != nil {
+			fmt.Println(string(*output))
+		}
 	}
 }
 
