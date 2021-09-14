@@ -24,6 +24,7 @@ const (
 var txtInput string
 var sCmdOn string = ""
 var sCmdOff string = ""
+var ditMs int = -1
 var curMode ToolMode = ModeNone
 var bVerbose bool = true
 var bPlayback bool = false
@@ -43,6 +44,7 @@ func printHelp() {
 	fmt.Println("\t-h: print this help screen")
 	fmt.Println("\t-s: silent mode; no verbose messages, just the output")
 	fmt.Println("Morse Format Params:")
+	fmt.Println("\t-t [ms]: sets the duration of a dit in ms (DEFAULT: 50)")
 	fmt.Println("\t-sW [num]: sets the number of spaces between words in Morse code (DEFAULT: 7)")
 	fmt.Println("\t-sS [num]: sets the number of spaces between symbols within a single word in Morse code (DEFAULT: 3)")
 	fmt.Println("Playback Params:")
@@ -74,6 +76,12 @@ func parseCliArgs(alphabet *morsica.Alphabet) {
 			curMode = ModeEncoding
 		case "-d":
 			curMode = ModeDecoding
+		case "-t":
+			val, err := getIntArgValue(&args, i)
+			if err == nil {
+				ditMs = val
+				i++
+			}
 		case "-sW":
 			val, err := getIntArgValue(&args, i)
 			if err == nil {
@@ -145,6 +153,9 @@ func guessModeIfNeeded() {
 func playback(morse string) {
 	printVerbose("Starting Playback!")
 	timing := morsica.NewTiming()
+	if ditMs >= 0 {
+		timing.SetDitMs(ditMs)
+	}
 	player := morsica.NewIntervalSequencePlayer(timing.MorseMessageToIntervalSequence(morse))
 	var cmdOn *exec.Cmd = nil
 	var cmdOff *exec.Cmd = nil
@@ -205,12 +216,6 @@ func performDecoding(alphabet *morsica.Alphabet) {
 ///
 
 func main() {
-	/*cmd := exec.Command("echo", "CIPPA")
-	stdout, err := cmd.Output()
-	if err != nil {
-		fmt.Println(err.Error())
-	}
-	fmt.Print(string(stdout))*/
 	alphabet := morsica.NewAlphabet()
 	parseCliArgs(alphabet)
 	guessModeIfNeeded()
