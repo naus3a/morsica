@@ -198,7 +198,7 @@ func (p *IntervalSequencePlayer) Start() {
 }
 
 func (p *IntervalSequencePlayer) startTimerForInterval(idx int) {
-	if idx < 0 || (idx >= len(p.Sequence)-1) {
+	if idx < 0 || (idx > len(p.Sequence)-1) {
 		p.Stop()
 		return
 	}

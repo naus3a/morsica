@@ -1,7 +1,9 @@
 package morsica
 
 import (
+	"fmt"
 	"testing"
+	"time"
 )
 
 func TestIntervalSequenceCreation(t *testing.T) {
@@ -94,10 +96,14 @@ func TestIntervalSequenceCreation(t *testing.T) {
 	}
 }
 
-/*func TestIntervalPlayer(t *testing.T) {
-	morse := "...   ---   ..."
+func TestIntervalPlayer(t *testing.T) {
+	morse := "..."
 	timing := NewTiming()
-	player := NewIntervalSequencePlayer(timing.MorseMessageToIntervalSequence(morse))
+	seq := timing.MorseMessageToIntervalSequence(morse)
+	if len(seq) != 5 {
+		t.Fatalf(`MorseMessageToIntervalSequence("..."): expected 5 intervals, go %d`, len(seq))
+	}
+	player := NewIntervalSequencePlayer(seq)
 	player.OnSignalOn = func() {
 		fmt.Println("ON ", time.Now())
 	}
@@ -105,4 +111,4 @@ func TestIntervalSequenceCreation(t *testing.T) {
 		fmt.Println("OFF ", time.Now())
 	}
 	player.Start()
-}*/
+}
